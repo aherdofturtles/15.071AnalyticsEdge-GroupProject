@@ -1,5 +1,6 @@
 rm(list = ls()) # Clear environment
 
+install.packages("read.xl")
 library(readxl)
 library(dplyr)
 
@@ -14,25 +15,25 @@ h1b = h1b_raw %>%
          CASE_SUBMITTED,
          DECISION_DATE,
          VISA_CLASS,
-         #         EMPLOYMENT_START_DATE Beginning date of employment.
-         #         EMPLOYMENT_END_DATE Ending date of employment.
+#         EMPLOYMENT_START_DATE Beginning date of employment.
+#         EMPLOYMENT_END_DATE Ending date of employment.
          EMPLOYER_NAME,
-         #         EMPLOYER_BUSINESS_DBA Trade Name or dba name of employer submitting labor condition
-         #         EMPLOYER_ADDRESS
+#         EMPLOYER_BUSINESS_DBA Trade Name or dba name of employer submitting labor condition
+#         EMPLOYER_ADDRESS
          EMPLOYER_CITY,
          EMPLOYER_STATE,
          EMPLOYER_POSTAL_CODE,
          EMPLOYER_COUNTRY,
-         #         EMPLOYER_PROVINCE
-         #         EMPLOYER_PHONE
-         #         EMPLOYER_PHONE_EXT
+#         EMPLOYER_PROVINCE
+#         EMPLOYER_PHONE
+#         EMPLOYER_PHONE_EXT
          AGENT_REPRESENTING_EMPLOYER, # Y = Employer is represented by an Agent/Attorney
          AGENT_ATTORNEY_NAME,
-         #         AGENT_ATTORNEY_CITY City information for the Agent or Attorney filing an H-1B application on
-         #         AGENT_ATTORNEY_STATE State information for the Agent or Attorney filing an H-1B application on
+#         AGENT_ATTORNEY_CITY City information for the Agent or Attorney filing an H-1B application on
+#         AGENT_ATTORNEY_STATE State information for the Agent or Attorney filing an H-1B application on
          JOB_TITLE,
          SOC_CODE,
-         #        SOC_NAME,
+#         SOC_NAME,
          NAICS_CODE, # Industry code as classified by the North American Industrial Classification System
          TOTAL_WORKERS, # Total number of foreign workers requested by the Employer(s).
          NEW_EMPLOYMENT, # Worker(s) will begin employment for new employer,
@@ -44,23 +45,23 @@ h1b = h1b_raw %>%
          FULL_TIME_POSITION, #Y = Full Time Position; N = Part Time Position.
          PREVAILING_WAGE, # Prevailing Wage for the job being requested for temporary labor condition.
          PW_UNIT_OF_PAY, # Daily (DAI), Hourly (HR), Bi-weekly (BI),Weekly (WK),Monthly (MTH),Yearly (YR)
-         #         PW_WAGE_LEVEL Variables include "I", "II", "III", "IV" or "N/A."
-         #         PW_SOURCE Variables include "OES", "CBA", "DBA", "SCA" or "Other".
-         #         PW_SOURCE_YEAR Year the Prevailing Wage Source was Issued.
-         #         PW_SOURCE_OTHER, If "Other Wage Source", provide the source of wage.
+#         PW_WAGE_LEVEL Variables include "I", "II", "III", "IV" or "N/A."
+#         PW_SOURCE Variables include "OES", "CBA", "DBA", "SCA" or "Other".
+#         PW_SOURCE_YEAR Year the Prevailing Wage Source was Issued.
+#         PW_SOURCE_OTHER, If "Other Wage Source", provide the source of wage.
          WAGE_RATE_OF_PAY_FROM, # Employer's proposed wage rate.
          WAGE_RATE_OF_PAY_TO, # Maximum proposed wage rate.
          WAGE_UNIT_OF_PAY, # "Hour", "Week", "Bi-Weekly", "Month", "Year"
          H1B_DEPENDENT, # Y = Employer is H-1B Dependent; 1-25 FT employees = 8 H1B, 26-50 = 13 H1B, >50 =15% H1B workers.
          WILLFUL_VIOLATOR, # Y = Employer has been previously found to be a Willful Violator;
-         #         SUPPORT_H1B Y = Employer will use the temporary LCA only to support H-1B petitions of exempt H-1B worker(s); 
+#         SUPPORT_H1B Y = Employer will use the temporary LCA only to support H-1B petitions of exempt H-1B worker(s); 
          LABOR_CON_AGREE, #Y = Employer agrees to the responses to the Labor Condition Statements
-         #         PUBLIC_DISCLOSURE_LOCATION Variables include "Place of Business" or "Place of Employment."
+#         PUBLIC_DISCLOSURE_LOCATION Variables include "Place of Business" or "Place of Employment."
          WORKSITE_CITY, # City information of the foreign worker's intended area of employment.
-         #         WORKSITE_COUNTY # County information of the foreign worker's intended area of employment.
+#         WORKSITE_COUNTY # County information of the foreign worker's intended area of employment.
          WORKSITE_STATE, #State information of the foreign worker's intended area of employment.
          WORKSITE_POSTAL_CODE # Zip Code information of the foreign worker's intended area of employment.
-         #         ORIGINAL_CERT_DATE  
+#         ORIGINAL_CERT_DATE  
   ) %>%
   
   filter(VISA_CLASS == "H1-B" | # We focus only on H-1B
