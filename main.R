@@ -64,10 +64,14 @@ h1b = h1b_raw %>%
 #         ORIGINAL_CERT_DATE  
   ) %>%
   
-  filter(VISA_CLASS == "H1-B" | # We focus only on H-1B
-           CASE_STATUS != "WITHDRAWN" # These are neither certified not rejected 
-  ) # 603,878 rows
-
+  filter(VISA_CLASS == "H1-B" |  # Focus only on H-1B
+         CASE_STATUS != "WITHDRAWN"  # These are neither certified not rejected 
+  ) %>% # 603,878 rows
+  
+  filter(!is.na(PW_UNIT_OF_PAY) & # Remove NAs
+         !is.na(WAGE_UNIT_OF_PAY) # Remove NAs
+  ) # 603,834 rows
+  
 # Convert columns into correct data types
 h1b$CASE_STATUS = as.factor(h1b$CASE_STATUS)
 h1b$CASE_SUBMITTED = as.Date(strptime(h1b$CASE_SUBMITTED, "%Y-%m-%d"))
@@ -89,6 +93,21 @@ h1b$WORKSITE_CITY = as.factor(h1b$WORKSITE_CITY)
 h1b$WORKSITE_STATE = as.factor(h1b$WORKSITE_STATE)
 h1b$WORKSITE_POSTAL_CODE = as.factor(h1b$WORKSITE_POSTAL_CODE)
 
+# Standardizing prevailing and wage
+
+Unit_to_Yearly = function(wage,wage_unit) {
+  return(ifelse(wage_unit == "Year", wage, 
+                ifelse(wage_unit == "Hour", 2080*wage,
+                       ifelse(wage_unit== "Week", 52*wage,
+                              ifelse(wage_unit == "Month", 12*wage,
+                                     26*wage))))) # Bi-weekly
+}
+
+h1b$PW_STD = Unit_to_Yearly(h1b$PREVAILING_WAGE, h1b$PW_UNIT_OF_PAY)
+
+#AVERAGE WAGE CALCULATION
+
+
 ## Need to do the following:
 # Standardize Prevailing Wage and Wage of Unit Pay
 # Calculate Average Wage
@@ -99,7 +118,7 @@ h1b$WORKSITE_POSTAL_CODE = as.factor(h1b$WORKSITE_POSTAL_CODE)
 
 # Then display Raw Data Wrangled
 str(h1b)
-
+summary(h1b$PW_STD)
 
 ## Keep in mind: 
 # Employer name contains certain words, is a certain employer
