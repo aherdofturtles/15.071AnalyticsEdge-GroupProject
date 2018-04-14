@@ -5,7 +5,12 @@ library(readxl)
 library(dplyr)
 
 # Read xlsx downloaded from https://www.foreignlaborcert.doleta.gov/performancedata.cfm
-h1b_raw = read_excel("~/GitHub/15.071AnalyticsEdge-GroupProject/H-1B_Disclosure_Data_FY17.xlsx") #Oct 2016 to Sep 2017; 624,650 rows
+# h1b_raw = read_excel("~/GitHub/15.071AnalyticsEdge-GroupProject/H-1B_Disclosure_Data_FY17.xlsx") #Oct 2016 to Sep 2017; 624,650 rows
+# Saving on object in RData format
+# save(h1b_raw, file = "H1B_Raw.RData")
+
+# To load the data again
+load("H1B_Raw.RData")
 
 # Selecting only the relevant columns
 h1b = h1b_raw %>% 
