@@ -54,7 +54,7 @@ h1b.edit = h1b %>%
   ) 
 
 # Reverse result; Predict negative
-h1b.edit$RESULT = as.factor((as.numeric(as.character(h1b$RESULT))-1)^2)
+# h1b.edit$RESULT = as.factor((as.numeric(as.character(h1b$RESULT))-1)^2)
 
 # Sparcify some factors
 lf1 = names(which(prop.table(table(h1b.edit$SOC_CODE)) < 0.005))
