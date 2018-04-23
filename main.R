@@ -122,7 +122,7 @@ Avg_Wage = function(wage_to,wage_from) {return(ifelse(wage_to == 0, wage_from, (
 h1b$WAGE_STD = Unit_to_Yearly(Avg_Wage(h1b$WAGE_RATE_OF_PAY_TO, h1b$WAGE_RATE_OF_PAY_FROM),h1b$WAGE_UNIT_OF_PAY)
 
 # Certified = 0, Rejected = 1
-Certification = function(status) {return(ifelse(status == "DENIED", 0, 1))}
+Certification = function(status) {return(ifelse(status == "DENIED", 1, 0))}
 h1b$RESULT = Certification(h1b$CASE_STATUS)
 h1b$RESULT= as.factor(h1b$RESULT)
 

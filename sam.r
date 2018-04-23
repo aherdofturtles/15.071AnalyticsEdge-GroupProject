@@ -90,14 +90,15 @@ h1b.edit = na.omit(h1b.edit) # drop missing values
 
 # Split into training and test
 set.seed(16)
-h1b.split = createDataPartition(h1b.edit$RESULT, p = 1, list = FALSE) # Uses only 10% of database
-h1b.split2 = createDataPartition(h1b.split, p = 0.3, list = FALSE) # Split into test and training
+h1b.split = createDataPartition(h1b.edit$RESULT, p = 0.1, list = FALSE) # Uses only 10% of database
+h1b.split2 = createDataPartition(h1b.split, p = 0.7, list = FALSE) # Split into test and training
 h1b.tmp = h1b.edit[h1b.split,]
 h1b.train = h1b.tmp[h1b.split2,]
 h1b.test = h1b.tmp[-h1b.split2,]
 
 # Model 1: Logistical Regression
 h1b.LR1 = glm(RESULT ~ ., data=h1b.train, family=binomial)
+?glm
 
 summary(h1b.LR1)
 
@@ -130,7 +131,7 @@ summary(h1b$EMPLOYER_COUNTRY) # Contains NAs - DECIDE HOW TO TREAT
 summary(h1b$AGENT_REPRESENTING_EMPLOYER) # Contains NAs - DECIDE HOW TO TREAT 
 table(h1b$AGENT_ATTORNEY_NAME) # OK 
 table(h1b$JOB_TITLE) # OK
-table(h1b$SOC_CODE) # OK
+summary(h1b$SOC_CODE) # OK
 table(h1b$NAICS_CODE) # OK
 table(h1b$TOTAL_WORKERS) # OK
 table(h1b$NEW_EMPLOYMENT) # OK
