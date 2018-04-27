@@ -1,4 +1,6 @@
 # Month of application? Removes ex-post analysis
+# REMOVE INC LCC LIMITED SERVICE CORPORATION employer
+# AA CORPUS
 
 library(caret) # Split data
 library(ROCR) # AUC
@@ -70,23 +72,29 @@ h1b.edit$JOB_TITLE_JUNIOR_ASSOCIATE = regex(h1b$JOB_TITLE,"ASSOCIATE")
 h1b.edit$JOB_TITLE_JUNIOR_ANALYST = regex(h1b$JOB_TITLE,"ANALYST") # or trainee
 
 # h1b.edit$JOB_TITLE_POPULAR = regex(h1b$JOB_TITLE,"(?=.*DATA)(?=.*MACHINE)")
-# count(filter(h1b, grepl("CHIEF",JOB_TITLE)))
+# count(filter(h1b, grepl("CEO",JOB_TITLE)))
 
 # Meta Data - Employer
 employer_corpus = Corpus(VectorSource(h1b.edit$EMPLOYER_NAME))
+employer_corpus = tm_map(employer_corpus, removeWords, c("INC", "LLC", "LIMITED", "SERVICES", "CORPORATION", "SOLUTIONS", "TECHNOLOGIES", "AMERICA", "CONSULTING", "UNIVERSITY", "SYSTEMS", "GROUP", "TECHNOLOGY","TECH","CONSULTANCY","SOFTWARE","COMPANY","THE","GLOBAL","AMERICAS","USA","PRIVATE","INTERNATIONAL","INDIA","CORP","HEALTH","MANAGEMENT","MEDICAL","AND","YOUNG","LLP","CENTER"))
 employer_corpus.dtm = DocumentTermMatrix(employer_corpus, control = list(tolower = F))
 
-employer_corpus.pf = colSums(as.matrix(removeSparseTerms(employer_corpus.dtm, 0.99)))
+
+employer_corpus.pf = colSums(as.matrix(removeSparseTerms(employer_corpus.dtm, 0.995)))
 employer_corpus.pf2 = employer_corpus.pf[order(employer_corpus.pf, decreasing=T)]
 
 h1b.edit$EMPLOYER_NAME_POPULAR = regex(h1b$EMPLOYER_NAME,paste(names(employer_corpus.pf2)[1:5], collapse="|"))
+
+h1b.edit$EMPLOYER_NAME_INDIA = regex(h1b$EMPLOYER_NAME,"INDIA")
+h1b.edit$EMPLOYER_NAME_INTL = regex(h1b$EMPLOYER_NAME,"AMERICAN|AMERICA|AMERICAS|INTERNATIONAL|GLOBAL|USA")
+h1b.edit$EMPLOYER_NAME_TECH = regex(h1b$EMPLOYER_NAME,"TECHNOLOGY|TECHNOLOGIES|TECH|SOFTWARE")
 
 # Meta Data - Agent Attorney
 aa_corpus = Corpus(VectorSource(h1b.edit$AGENT_ATTORNEY_NAME))
 aa_corpus.dtm = DocumentTermMatrix(aa_corpus, control = list(tolower = F))
 
-aa_corpus.pf = colSums(as.matrix(removeSparseTerms(aa_corpus.dtm, 0.99)))
-aa_corpus.pf2 = aa_corpus[order(aa_corpus.pf, decreasing=T)]
+aa_corpus.pf = colSums(as.matrix(removeSparseTerms(aa_corpus.dtm, 0.995)))
+aa_corpus.pf2 = aa_corpus.pf[order(aa_corpus.pf, decreasing=T)]
 
 h1b.edit$AGENT_ATTORNEY_POPULAR = regex(h1b$AGENT_ATTORNEY_NAME,paste(names(aa_corpus.pf2)[1:5], collapse="|"))
 
@@ -131,6 +139,9 @@ h1b.LR1 = glm(RESULT ~ .
               -JOB_TITLE_JUNIOR_ASSOCIATE
               -JOB_TITLE_JUNIOR_ANALYST
               -EMPLOYER_NAME_POPULAR
+              -EMPLOYER_NAME_INDIA
+              -EMPLOYER_NAME_INTL
+              -EMPLOYER_NAME_TECH
               -AGENT_ATTORNEY_POPULAR
               , data=h1b.train, family=binomial)
 summary(h1b.LR1)
@@ -140,7 +151,7 @@ h1b.LR1.p = predict(h1b.LR1, newdata=h1b.test, type="response")
 h1b.LR1.p.thresh  = (h1b.LR1.p > 0.01) #arbitrary
 h1b.LR1.cm = table(h1b.test$RESULT, h1b.LR1.p.thresh)
 h1b.LR1.rocr.p = prediction(h1b.LR1.p, h1b.test$RESULT)
-h1b.LR1.auc = as.numeric(performance(h1b.LR1.rocr.p, "auc")@y.values) # 0.760193 @ 10% partition / 0.7263595 @ 5% 
+h1b.LR1.auc = as.numeric(performance(h1b.LR1.rocr.p, "auc")@y.values) # 0.7263595 @ 0.01/5%
 
 # Model 2: LR + Metadata
 h1b.LR2 = glm(RESULT ~ .,data=h1b.train, family=binomial)
@@ -151,16 +162,16 @@ h1b.LR2.p = predict(h1b.LR2, newdata=h1b.test, type="response")
 h1b.LR2.p.thresh  = (h1b.LR2.p > 0.01)
 h1b.LR2.cm = table(h1b.test$RESULT, h1b.LR2.p.thresh)
 h1b.LR2.rocr.p = prediction(h1b.LR2.p, h1b.test$RESULT)
-h1b.LR2.auc = as.numeric(performance(h1b.LR2.rocr.p, "auc")@y.values) # 0.72618 @ 5% data partition
+h1b.LR2.auc = as.numeric(performance(h1b.LR2.rocr.p, "auc")@y.values) # 0.7269315 @ 0.01/5% 
 
 # Model 3: LR+Metadata using Stepwise Regression
 #################### UNCOMMENT THIS FOR FINAL
- # h1b.LR3 = step(h1b.LR2)
+# h1b.LR3 = step(h1b.LR2)
 #
 # 4 significant variables found in stepwise for 5% dataset (>90%)
 h1b.LR3 = glm(RESULT ~
                 JOB_TITLE_POPULAR +
-                JOB_TITLE_JUNIOR_ASSOCIATE+
+                JOB_TITLE_JUNIOR_ASSOCIATE +
                 NEW_CONCURRENT_EMPLOYMENT +
                 AGENT_REPRESENTING_EMPLOYER +
                 H1B_DEPENDENT +
@@ -213,9 +224,11 @@ h1b.CART2 = train(y = h1b.train$RESULT,
                         x = subset(h1b.train, select = -c(RESULT)),
                         method = "rpart",
                         trControl = trainControl(method = "cv", number = 10),
-                        tuneGrid = data.frame(.cp = seq(.001, .02, .001))) 
+                        tuneGrid = data.frame(.cp = seq(.0001, .02, .0001))) 
 
-h1b.CART2$results$cp[which.max(h1b.CART2$results$Accuracy)] # best cp is 0.006-0.008
+h1b.CART2$results$cp[which.max(h1b.CART2$results$Accuracy)] # best cp is 0.006-0.008 | 0.0054 |Loss matrix of 2
+
+
 prp(h1b.CART2$finalModel)
 
 
