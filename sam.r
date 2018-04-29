@@ -26,9 +26,6 @@ h1b.edit = select(h1b,
                   -CASE_NUMBER, # Description
                   -CASE_STATUS, # Withdrawn is ex-post to dependent variable
                   -NAICS_CODE, # Not sparse enough
-                  # -JOB_TITLE,
-                  # -EMPLOYER_NAME, 
-                  # -AGENT_ATTORNEY_NAME,
                   -EMPLOYER_COUNTRY # too many NAs
                   )
 
@@ -144,7 +141,7 @@ h1b.LR1.p = predict(h1b.LR1, newdata=h1b.test, type="response")
 h1b.LR1.p.thresh  = (h1b.LR1.p > 0.01) #arbitrary
 h1b.LR1.cm = table(h1b.test$RESULT, h1b.LR1.p.thresh)
 h1b.LR1.rocr.p = prediction(h1b.LR1.p, h1b.test$RESULT)
-h1b.LR1.auc = as.numeric(performance(h1b.LR1.rocr.p, "auc")@y.values) # 0.6533058 @ 0.01/5%
+h1b.LR1.auc = as.numeric(performance(h1b.LR1.rocr.p, "auc")@y.values) # 0.65331 @ 0.01/5%
 
 # Model 2: LR + Metadata
 h1b.LR2 = glm(RESULT ~ .,data=h1b.train, family=binomial)
@@ -155,7 +152,7 @@ h1b.LR2.p = predict(h1b.LR2, newdata=h1b.test, type="response")
 h1b.LR2.p.thresh  = (h1b.LR2.p > 0.01)
 h1b.LR2.cm = table(h1b.test$RESULT, h1b.LR2.p.thresh)
 h1b.LR2.rocr.p = prediction(h1b.LR2.p, h1b.test$RESULT)
-h1b.LR2.auc = as.numeric(performance(h1b.LR2.rocr.p, "auc")@y.values) # 0.6576312 @ 0.01/5% 
+h1b.LR2.auc = as.numeric(performance(h1b.LR2.rocr.p, "auc")@y.values) # 0.65688 @ 0.01/5% 
 
 # Model 3: LR+Metadata using Stepwise Regression
 #################### UNCOMMENT THIS FOR FINAL
@@ -177,7 +174,7 @@ h1b.LR3.p = predict(h1b.LR3, newdata=h1b.test, type="response")
 h1b.LR3.p.thresh  = (h1b.LR3.p > 0.01)
 h1b.LR3.cm = table(h1b.test$RESULT, h1b.LR3.p.thresh)
 h1b.LR3.rocr.p = prediction(h1b.LR3.p, h1b.test$RESULT)
-h1b.LR3.auc = as.numeric(performance(h1b.LR3.rocr.p, "auc")@y.values) # 0.82771 @ 5% data partition
+h1b.LR3.auc = as.numeric(performance(h1b.LR3.rocr.p, "auc")@y.values) # 0.70806 @ 5% data partition
 
 # Linear Regression Summary
 h1b.LR1.cm
