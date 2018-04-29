@@ -10,6 +10,7 @@ library(rpart.plot) # CART
 library(randomForest) # CART
 library(ggplot2) # Plots
 library(tm) # Text Mining
+library(lubridate) # Date
 
 ####################
 # Section 1 - Data Wrangling
@@ -48,7 +49,8 @@ lf7 = names(which(prop.table(table(h1b.edit$WORKSITE_POSTAL_CODE)) < 0.005))
 levels(h1b.edit$WORKSITE_POSTAL_CODE)[levels(h1b.edit$WORKSITE_POSTAL_CODE) %in% lf7] <- "Other"
 
 # Dates
-h1b.edit$PERIOD =  h1b.edit$DECISION_DATE - h1b.edit$CASE_SUBMITTED
+h1b.edit$MONTH_APPLIED = as.factor(month(h1b.edit$CASE_SUBMITTED))
+# h1b.edit$PERIOD =  h1b.edit$DECISION_DATE - h1b.edit$CASE_SUBMITTED
 h1b.edit$WAGE_DIFF = h1b.edit$WAGE_STD - h1b.edit$PW_STD
 
 # Meta Data
@@ -63,16 +65,12 @@ job_corpus.pf2 = job_corpus.pf[order(job_corpus.pf, decreasing=T)]
 
 h1b.edit$JOB_TITLE_POPULAR = regex(h1b$JOB_TITLE,paste(names(job_corpus.pf2)[1:5], collapse="|")) #1-5 top names
 h1b.edit$JOB_TITLE_SENIOR = regex(h1b$JOB_TITLE,"CHIEF|SENIOR|HEAD|DIRECTOR|PRESIDENT")
-h1b.edit$JOB_TITLE_JUNIOR = regex(h1b$JOB_TITLE,"ASSISTANT|JUNIOR|AUDITOR|ASSOCIATE|ANALYST")
+h1b.edit$JOB_TITLE_JUNIOR = regex(h1b$JOB_TITLE,"ASSISTANT|JUNIOR|AUDITOR|ASSOCIATE|TRAINEE")
 
-h1b.edit$JOB_TITLE_JUNIOR_ASSISTANT = regex(h1b$JOB_TITLE,"ASSISTANT")
-h1b.edit$JOB_TITLE_JUNIOR_JUNIOR = regex(h1b$JOB_TITLE,"JUNIOR")
-h1b.edit$JOB_TITLE_JUNIOR_AUDITOR = regex(h1b$JOB_TITLE,"AUDITOR")
-h1b.edit$JOB_TITLE_JUNIOR_ASSOCIATE = regex(h1b$JOB_TITLE,"ASSOCIATE")
-h1b.edit$JOB_TITLE_JUNIOR_ANALYST = regex(h1b$JOB_TITLE,"ANALYST") # or trainee
-
+# Not used, but other types of metadata
+# h1b.edit$JOB_TITLE_JUNIOR_ASSISTANT = regex(h1b$JOB_TITLE,"ASSISTANT")
 # h1b.edit$JOB_TITLE_POPULAR = regex(h1b$JOB_TITLE,"(?=.*DATA)(?=.*MACHINE)")
-# count(filter(h1b, grepl("CEO",JOB_TITLE)))
+# count(filter(h1b, grepl("ANALYST",JOB_TITLE)))
 
 # Meta Data - Employer
 employer_corpus = Corpus(VectorSource(h1b.edit$EMPLOYER_NAME))
@@ -133,11 +131,6 @@ h1b.LR1 = glm(RESULT ~ .
               -JOB_TITLE_POPULAR
               -JOB_TITLE_SENIOR
               -JOB_TITLE_JUNIOR
-              -JOB_TITLE_JUNIOR_ASSISTANT
-              -JOB_TITLE_JUNIOR_JUNIOR
-              -JOB_TITLE_JUNIOR_AUDITOR
-              -JOB_TITLE_JUNIOR_ASSOCIATE
-              -JOB_TITLE_JUNIOR_ANALYST
               -EMPLOYER_NAME_POPULAR
               -EMPLOYER_NAME_INDIA
               -EMPLOYER_NAME_INTL
@@ -151,7 +144,7 @@ h1b.LR1.p = predict(h1b.LR1, newdata=h1b.test, type="response")
 h1b.LR1.p.thresh  = (h1b.LR1.p > 0.01) #arbitrary
 h1b.LR1.cm = table(h1b.test$RESULT, h1b.LR1.p.thresh)
 h1b.LR1.rocr.p = prediction(h1b.LR1.p, h1b.test$RESULT)
-h1b.LR1.auc = as.numeric(performance(h1b.LR1.rocr.p, "auc")@y.values) # 0.7263595 @ 0.01/5%
+h1b.LR1.auc = as.numeric(performance(h1b.LR1.rocr.p, "auc")@y.values) # 0.6533058 @ 0.01/5%
 
 # Model 2: LR + Metadata
 h1b.LR2 = glm(RESULT ~ .,data=h1b.train, family=binomial)
@@ -162,7 +155,7 @@ h1b.LR2.p = predict(h1b.LR2, newdata=h1b.test, type="response")
 h1b.LR2.p.thresh  = (h1b.LR2.p > 0.01)
 h1b.LR2.cm = table(h1b.test$RESULT, h1b.LR2.p.thresh)
 h1b.LR2.rocr.p = prediction(h1b.LR2.p, h1b.test$RESULT)
-h1b.LR2.auc = as.numeric(performance(h1b.LR2.rocr.p, "auc")@y.values) # 0.7269315 @ 0.01/5% 
+h1b.LR2.auc = as.numeric(performance(h1b.LR2.rocr.p, "auc")@y.values) # 0.6576312 @ 0.01/5% 
 
 # Model 3: LR+Metadata using Stepwise Regression
 #################### UNCOMMENT THIS FOR FINAL
@@ -170,14 +163,10 @@ h1b.LR2.auc = as.numeric(performance(h1b.LR2.rocr.p, "auc")@y.values) # 0.726931
 #
 # 4 significant variables found in stepwise for 5% dataset (>90%)
 h1b.LR3 = glm(RESULT ~
-                JOB_TITLE_POPULAR +
-                JOB_TITLE_JUNIOR_ASSOCIATE +
-                NEW_CONCURRENT_EMPLOYMENT +
                 AGENT_REPRESENTING_EMPLOYER +
-                H1B_DEPENDENT +
-                LABOR_CON_AGREE +
-                PERIOD +
-                WAGE_DIFF
+                SOC_CODE + 
+                NEW_CONCURRENT_EMPLOYMENT + 
+                H1B_DEPENDENT + WAGE_DIFF 
                 ,data=h1b.train, family=binomial)
 ###################
 
@@ -215,22 +204,37 @@ sumLR
 ####################
 
 # THIS SECTION IS NOT COMPLETE
+# 
+# h1b.CART1 = rpart(RESULT ~., data = h1b.train, method="class") # initial model
+# prp(h1b.CART1)
+# 
+# set.seed(16) #random number
+# h1b.CART2 = train(y = h1b.train$RESULT,
+#                         x = subset(h1b.train, select = -c(RESULT)),
+#                         method = "rpart",
+#                         trControl = trainControl(method = "cv", number = 10),
+#                         tuneGrid = data.frame(.cp = seq(.0001, .02, .0001))) 
+# 
+# h1b.CART2$results$cp[which.max(h1b.CART2$results$Accuracy)] # best cp is 0.006-0.008 | 0.0054 |Loss matrix of 2
+# 
+# 
+# prp(h1b.CART2$finalModel)
 
-h1b.CART1 = rpart(RESULT ~., data = h1b.train, method="class") # initial model
-prp(h1b.CART1)
+# Loss Matrix:
+LossMatrix = matrix(0,2,2)
+LossMatrix[2,1] = 1
+LossMatrix[1,2] = 10
+LossMatrix
 
-set.seed(16) #random number
-h1b.CART2 = train(y = h1b.train$RESULT,
-                        x = subset(h1b.train, select = -c(RESULT)),
-                        method = "rpart",
-                        trControl = trainControl(method = "cv", number = 10),
-                        tuneGrid = data.frame(.cp = seq(.0001, .02, .0001))) 
-
-h1b.CART2$results$cp[which.max(h1b.CART2$results$Accuracy)] # best cp is 0.006-0.008 | 0.0054 |Loss matrix of 2
-
-
-prp(h1b.CART2$finalModel)
-
+# Inclussion of loss matrix in rpart as parameters
+h1b.eff.mod = rpart(RESULT~., cp = 0.0002,
+                    data = h1b.train,
+                    parms=list(loss=LossMatrix))
+prp(h1b.eff.mod)
+h1b.eff.mod
+pred = predict(h1b.eff.mod, newdata=h1b.test, type="class")
+confusion.matrix = table(h1b.test$RESULT, pred)
+confusion.matrix
 
 
 
