@@ -56,7 +56,6 @@ d1=dist(clust1d)
 hclust.mod1=hclust(d1,method="ward.D2")
 
 # Plot Dendrogram
-par(mar=c(1,1,1,1))
 plot(hclust.mod1, labels=F, ylab="Dissimilarity")
 
 # Scree Plot 
