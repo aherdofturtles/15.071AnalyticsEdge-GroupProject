@@ -35,7 +35,6 @@ h1b.pass=h1b.edit[h1b.edit$RESULT==0,]
 
 # ======2.1 Create a new dataframe with WAGE_DIFF and 12 MONTH_APPLIED======
 clust.month=h1b.pass %>% select(WAGE_DIFF,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec)
-
 # Normalized data 
 pp1<-preProcess(clust.month,method=c("center","scale"))
 clust1=predict(pp1,clust.month)
@@ -44,18 +43,20 @@ clust1=predict(pp1,clust.month)
 set.seed(144)
 km1=kmeans(clust1,iter.max = 100,4)
 
+# K-means output
 km1$centers
 km.clusters1=km1$cluster
 km1$tot.withinss
 table(km.clusters1)
 
-
-# Hirachical clustering not working because of huge dataset, Below codes are based on 10000 rows
+### Hirachical clustering not working because of huge dataset 
+### Below codes are based on 10000 rows
 clust1d=clust1[1:10000,]
 d1=dist(clust1d)
 hclust.mod1=hclust(d1,method="ward.D2")
 
 # Plot Dendrogram
+par("mar")
 plot(hclust.mod1, labels=F, ylab="Dissimilarity")
 
 # Scree Plot 
@@ -64,6 +65,7 @@ hc.dissim1 <- data.frame(k = seq_along(hclust.mod1$height),
 plot(hc.dissim1$k, hc.dissim1$dissimilarity, type="l")
 plot(hc.dissim1$k, hc.dissim1$dissimilarity, type="l", xlim=c(0,50))
 
+# Hiarachical output
 h.clusters1=cutree(hclust.mod1, 4)
 aggregate(clust1d, by=list(h.clusters1), mean)
 table(h.clusters1)
@@ -88,7 +90,6 @@ clust2d=clust2[1:100,]
 d2=dist(clust2d)
 hclust.mod2=hclust(d2,method="ward.D2")
 
-par(mar=c(1,1,1,1))
 plot(hclust.mod2, labels=F, ylab="Dissimilarity")
 
 hc.dissim2 <- data.frame(k = seq_along(hclust.mod2$height),
@@ -119,7 +120,6 @@ clust3d=clust3[1:100,]
 d3=dist(clust3d)
 hclust.mod3=hclust(d3,method="ward.D2")
 
-par(mar=c(1,1,1,1))
 plot(hclust.mod3, labels=F, ylab="Dissimilarity")
 
 hc.dissim3 <- data.frame(k = seq_along(hclust.mod3$height),
